@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x1a1a2e);
@@ -11,15 +10,13 @@ const camera = new THREE.PerspectiveCamera(
   1000,
 );
 
-const renderer = new THREE.WebGLRenderer({ antialias: true });
+// Connect to the canvas element instead of appending to body
+const renderer = new THREE.WebGLRenderer({
+  canvas: document.querySelector("#bg"),
+  antialias: true,
+});
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
-document.body.appendChild(renderer.domElement);
-
-// Orbit controls for interaction
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.05;
 
 // Lights
 const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
@@ -218,8 +215,8 @@ protogen.add(rightCheek);
 
 scene.add(protogen);
 
+// Set initial camera position
 camera.position.set(0, 0, 5);
-controls.update();
 
 // Handle window resize
 window.addEventListener("resize", () => {
@@ -228,22 +225,35 @@ window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+// Scroll animation function
+function moveCamera() {
+  const t = document.body.getBoundingClientRect().top;
+
+  // Rotate protogen slightly on scroll
+  protogen.rotation.y = t * -0.002;
+  protogen.rotation.x = t * -0.0005;
+
+  // Move camera on scroll
+  camera.position.z = 5 + t * -0.005;
+}
+
+document.body.onscroll = moveCamera;
+moveCamera();
+
 let time = 0;
 
 function animate() {
   requestAnimationFrame(animate);
   time += 0.016;
 
+  // Gentle floating animation
   protogen.position.y = Math.sin(time * 0.5) * 0.1;
-  protogen.rotation.y = Math.sin(time * 0.3) * 0.1;
 
+  // Pulsing glow effect
   const pulse = 0.6 + Math.sin(time * 2) * 0.3;
   glowMaterial.emissiveIntensity = pulse;
 
-  controls.update();
   renderer.render(scene, camera);
 }
 
 animate();
-
-console.log("Protogen loaded! Drag to rotate, scroll to zoom.");
